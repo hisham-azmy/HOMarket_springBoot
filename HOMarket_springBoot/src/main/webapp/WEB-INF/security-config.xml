@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-4.3.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd ">
+
+	<beans:bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/" />
+		<beans:property name="suffix" value=".jsp" />
+	</beans:bean>
+	<context:property-placeholder location="classpath:application.properties" />
+	<!-- DataSource -->
+	<beans:bean
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource"
+		id="dataSource">
+		<beans:property name="driverClassName" value="${database.driver}"></beans:property>
+		<beans:property name="url" value="${database.url}"></beans:property>
+		<beans:property name="username" value="${database.user}"></beans:property>
+		<beans:property name="password" value="${database.password}"></beans:property>
+	</beans:bean>
+	<http use-expressions="true">
+		<intercept-url pattern="/admin/**" access="hasRole('ROLE_ADMIN')" />
+		<intercept-url pattern="/customer/**" access="hasRole('ROLE_USER')" />
+		
+		<form-login
+         login-page='/login'
+         default-target-url="/"
+         authentication-failure-url="/login?error=true" />
+		
+		<logout />
+	</http>
+
+	<authentication-manager>
+		<authentication-provider>
+			<jdbc-user-service data-source-ref="dataSource"
+
+				authorities-by-username-query="SELECT customer.name  
+				,role.name  FROM customer
+			JOIN customer_role ON customer_role.customer_id = customer.id
+			JOIN role ON role.id=customer_role.customer_id
+			WHERE customer.name = ? "
+				users-by-username-query="select name ,password ,1 as enabled from customer where name=? " />
+
+
+<!-- 			 <user-service> -->
+<!-- 			    <user name="admin" password="admin" authorities="ROLE_ADMIN" /> -->
+<!-- 			 </user-service> -->
+
+		</authentication-provider>
+	</authentication-manager>
+
+
+</beans:beans>
